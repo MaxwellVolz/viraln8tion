@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: n8n/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - WEBHOOK_URL=http://host.docker.internal:5678
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - N8N_SECURE_COOKIE=false
+      - N8N_CUSTOM_EXTENSIONS=/data/custom
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
+    volumes:
+      - ./n8n-data:/home/node/.n8n
+      - ./n8n-custom:/data/custom
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: miniio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio-data:/data
+
+  kokoro-tts:
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2
+    container_name: kokoro-tts
+    ports:
+      - "8880:8880"
+    # Add `--gpus all` only if you're using NVIDIA Docker runtime and a GPU
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           capabilities: [gpu]
+
+  baserow:
+    image: baserow/baserow:1.32.5
+    container_name: baserow
+    restart: unless-stopped
+    ports:
+      - "85:80"
+      - "443:443"
+    environment:
+      BASEROW_PUBLIC_URL: http://host.docker.internal:85
+    volumes:
+      - ./baserow-data:/baserow/data
+
+  nca-toolkit:
+    image: stephengpope/no-code-architects-toolkit:latest
+    container_name: nca-toolkit
+    ports:
+      - "8080:8080"
+    environment:
+      API_KEY: thekey
+      S3_ENDPOINT_URL: http://host.docker.internal:9000
+      S3_ACCESS_KEY: your_access_key
+      S3_SECRET_KEY: your_secret_key
+      S3_BUCKET_NAME: nca-toolkit
+      S3_REGION: None
