@@ -10,7 +10,7 @@ services:
       --max-model-len 2048
       --port 8000
     environment:
-      - HF_TOKEN=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  # Optional if model is public
+      - HF_TOKEN=test  # Optional if model is public
     deploy:
       resources:
         reservations:
