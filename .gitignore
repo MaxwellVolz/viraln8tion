@@ -1,5 +1,7 @@
 # Custom
 *zzz.md
+*.env
+*.venv
 
 # Logs
 logs

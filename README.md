@@ -145,7 +145,11 @@ docker run -d -p 8080:8080 --name nca-toolkit -e API_KEY=thekey -e S3_ENDPOINT_U
 
 ## OpenRouter 
 
-[Make Account](https://openrouter.ai/)
+1. [Make Account](https://openrouter.ai/)
+2. Copy Api Key
+3. Add to [n8n](http://localhost:5678/home/credentials)
+
+
 ---
 
 ## n8n Automation
@@ -156,6 +160,35 @@ docker run -d -p 8080:8080 --name nca-toolkit -e API_KEY=thekey -e S3_ENDPOINT_U
 4. Double-click `On form submission` and open the `Test URL`
 
 
+http://host.docker.internal:85/api-docs/database/163
 
+then Settings
 
 amazing facts about linus torvalds
+
+
+## n8n Setup
+
+### Node -> HTTP Request
+
+- Method: Post
+- Auth: None
+- Send Headers: True
+  - Name: Authorization
+  - Value: Token enter_your_baserow_api_token
+- Send Body: True
+  - Name: Title, Value: {value}
+
+
+## Rate Limited? Local LLM Setup
+
+Prereq's
+
+- Python
+
+
+```
+cd local_llm
+.venv\Scripts\activate
+pip install -r requirements.txt
+python -m vllm.entrypoints.openai.api_server --model deepseek-ai/deepseek-llm-3.1b-chat --port 8000
