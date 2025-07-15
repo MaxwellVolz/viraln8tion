@@ -1,0 +1,19 @@
+
+services:
+  deepseek:
+    image: vllm/vllm-openai:latest
+    container_name: deepseek
+    ports:
+      - "8000:8000"
+    command: >
+      --model deepseek-ai/deepseek-coder-1.3b-instruct
+      --max-model-len 2048
+      --port 8000
+    environment:
+      - HF_TOKEN=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  # Optional if model is public
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    runtime: nvidia
