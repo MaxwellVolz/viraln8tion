@@ -87,19 +87,8 @@ docker run -p 8880:8880 --name kokoro-tts-cpu ghcr.io/remsky/kokoro-fastapi-cpu:
 docker run -d --name baserow -e BASEROW_PUBLIC_URL=http://host.docker.internal:85 -v C:\Docker\baserow-data:/baserow/data -p 85:80 -p 443:443 --restart unless-stopped --shm-size=256mb baserow/baserow:1.32.5
 ```
 
-### Activate n8n key - from email
+> Activate n8n key - from email
 
-```
-docker exec -it n8n sh
-cd /home/node/.n8n
-mkdir custom
-cd custom
-npm init -y
-sed -i 's/"name": "custom"/"name": "n8n-custom"/' package.json
-npm install n8n-nodes-baserow
-exit
-docker restart n8n
-```
 
 ### Verify Setups
 
