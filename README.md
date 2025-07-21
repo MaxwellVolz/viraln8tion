@@ -182,13 +182,188 @@ amazing facts about linus torvalds
 
 ## Rate Limited? Local LLM Setup
 
-Prereq's
+### Prereq's
 
 - Python
+- 
 
+Make `/local_llm/.env` with: `HF_TOKEN=your_huggingface_key`
 
-```
+### Setup
+
+```sh
 cd local_llm
 .venv\Scripts\activate
 pip install -r requirements.txt
-python -m vllm.entrypoints.openai.api_server --model deepseek-ai/deepseek-llm-3.1b-chat --port 8000
+```
+### Run it
+
+```sh
+cd local_llm
+make tinyllama          # Spin up tinyllama on port 8000
+make tinyllama-down     # Stop tinyllama container
+make deepseekcode       # Spin up DeepSeekCode on port 8000
+make deepseekcode-down  # Stop DeepSeekCode container
+make mistral            # Spin up Mistral 7B on port 8000
+make mistral-down       # Stop Mistral container
+make stop-all           # Kill all running containers
+```
+
+## Postman - Test LLM Endpoint
+
+- Type: POST
+- URL: http://localhost:8000/v1/chat/completions
+
+Headers
+
+- Authorization | Bearer Test
+- Content-Type  | application/json
+
+Body
+
+Model Names: `deepseek-ai/deepseek-coder-1.3b-instruct`, `mistralai/Mistral-7B-Instruct-v0.1`, `TinyLlama/TinyLlama-1.1B-Chat-v1.0`
+
+raw:
+
+```json
+{  
+   "model": "deepseek-ai/deepseek-coder-1.3b-instruct",  
+   "messages": 
+   [    
+      {      
+      "role": "user",      
+      "content": "solve the fibonacci sequence with python using a list comp"    
+      }  
+   ]
+}
+```
+
+
+## Youtube Credentials
+
+To **automate posting to YouTube using n8n**, you need to use the **YouTube node** (which uses the YouTube Data API v3). Here's a full setup that lets you upload videos programmatically.
+
+---
+
+## ✅ Requirements
+
+1. **Google Cloud project**
+2. **YouTube Data API v3 enabled**
+3. **OAuth2 credentials**
+4. **n8n YouTube node configured**
+
+---
+
+## 🔧 Setup Guide
+
+### 1. **Create OAuth Credentials**
+
+* Go to: [https://console.cloud.google.com/](https://console.cloud.google.com/)
+* Create a project or use existing one.
+* Enable **YouTube Data API v3**
+* Go to **APIs & Services → Credentials**
+
+
+Thanks — that screenshot confirms you're using an **OAuth Client for “Desktop App”**, not for “Web App”.
+
+### 🔥 Problem:
+
+**Desktop App clients do not support redirect URI configuration** — that’s why you don’t see that option.
+
+### 🔧 Fix:
+
+You need to create a **new OAuth 2.0 Client ID of type “Web Application”**, which allows setting redirect URIs.
+
+---
+
+## ✅ Correct Steps:
+
+1. In **Google Cloud → Credentials**
+2. Click **Create Credentials → OAuth Client ID**
+3. Choose:
+
+   ```
+   Application Type: Web application
+   ```
+4. Set name: `n8n YouTube Uploader`
+5. Add **Authorized Redirect URI**:
+
+   ```
+   http://localhost:5678/rest/oauth2-credential/callback
+   ```
+6. Save. You’ll get a new **Client ID** and **Client Secret**.
+
+---
+
+## 🔁 Then in n8n:
+
+1. Go to **Credentials → New → YouTube OAuth2**
+2. Use the new Web Client ID + Secret
+3. It will now **redirect correctly** and allow you to sign in
+
+---
+
+
+
+## Stable Diffusion Locally
+
+
+### Pre-reqs
+
+```sh
+mkdir models outputs
+```
+
+
+### 
+
+docker-compose.yml
+
+```yml
+services:
+   ...
+  stable-diffusion:
+    image: siutin/stable-diffusion-webui-docker:latest-cuda-12.1.1
+    container_name: sd
+    command: ["bash", "webui.sh", "--api", "--listen"]
+    ports:
+      - "7860:7860"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    volumes:
+      - ./models:/app/stable-diffusion-webui/models
+      - ./outputs:/app/stable-diffusion-webui/outputs
+    restart: unless-stopped
+```
+
+
+### Run Service
+
+```sh
+docker compose up -d stable-diffusion
+# wait 2 minutes
+```
+
+### Test Image
+
+> Note: Stable Diffusion WebUI API (AUTOMATIC1111-based) returns a base64-encoded PNG, not a raw image file.
+> We can convert to a `.png` to view the result.
+
+```sh
+curl http://localhost:7860/sdapi/v1/txt2img \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sd_model_checkpoint": "sdxl_base_1.0.safetensors",
+    "prompt": "A cyberpunk-styled close-up of a grieving parent'\''s hands cradling a jar filled with dirt instead of ashes, illuminated by a flickering neon sign outside a dimly lit funeral home. The jar reflects eerie blue and purple hues, casting long shadows on the teardrop-streaked face in the background.",
+    "negative_prompt": "blurry, ugly, deformed, bad anatomy, low quality, abstract, cropped, out of frame, messy, bad lighting, text, watermark, distorted, wrong perspective",
+    "steps": 20,
+    "width": 576,
+    "height": 1024
+  }' | jq -r '.images[0]' | base64 -d > result.png
+
+```
+
+

@@ -1,21 +1,19 @@
-version: "3.8"
 
 services:
   n8n:
-    image: n8n/n8n:latest
+    image: docker.n8n.io/n8nio/n8n
     container_name: n8n
-    restart: unless-stopped
+    build:
+      context: ./n8n
+      dockerfile: Dockerfile
     ports:
       - "5678:5678"
     environment:
       - WEBHOOK_URL=http://host.docker.internal:5678
       - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
-      - N8N_SECURE_COOKIE=false
-      - N8N_CUSTOM_EXTENSIONS=/data/custom
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
     volumes:
-      - ./n8n-data:/home/node/.n8n
-      - ./n8n-custom:/data/custom
+      - C:/Docker/n8n-data:/home/node/.n8n
+    restart: unless-stopped
 
   minio:
     image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
@@ -24,18 +22,18 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: password123
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password123
     command: server /data --console-address ":9001"
     volumes:
-      - ./minio-data:/data
+      - C:/Docker/minio-data:/data
 
   kokoro-tts:
     image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2
     container_name: kokoro-tts
     ports:
       - "8880:8880"
-    # Add `--gpus all` only if you're using NVIDIA Docker runtime and a GPU
+    # Uncomment if GPU is available
     # deploy:
     #   resources:
     #     reservations:
@@ -46,14 +44,35 @@ services:
   baserow:
     image: baserow/baserow:1.32.5
     container_name: baserow
-    restart: unless-stopped
     ports:
       - "85:80"
       - "443:443"
     environment:
-      BASEROW_PUBLIC_URL: http://host.docker.internal:85
+      - BASEROW_PUBLIC_URL=http://host.docker.internal:85
     volumes:
-      - ./baserow-data:/baserow/data
+      - C:/Docker/baserow-data:/baserow/data
+    restart: unless-stopped
+    shm_size: "256mb"
+
+
+  stable-diffusion:
+    build:
+      context: ./stable_diffusion
+      dockerfile: Dockerfile
+    container_name: sd
+    command: ["bash", "webui.sh", "--xformers", "--api", "--listen"]
+    ports:
+      - "7860:7860"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    volumes:
+      - ./models:/app/stable-diffusion-webui/models
+      - ./outputs:/app/stable-diffusion-webui/outputs
+    restart: unless-stopped
+
 
   nca-toolkit:
     image: stephengpope/no-code-architects-toolkit:latest
@@ -61,9 +80,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      API_KEY: thekey
-      S3_ENDPOINT_URL: http://host.docker.internal:9000
-      S3_ACCESS_KEY: your_access_key
-      S3_SECRET_KEY: your_secret_key
-      S3_BUCKET_NAME: nca-toolkit
-      S3_REGION: None
+      - API_KEY=${API_KEY}
+      - S3_ENDPOINT_URL=http://host.docker.internal:9000
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_BUCKET_NAME=nca-toolkit
+      - S3_REGION=None

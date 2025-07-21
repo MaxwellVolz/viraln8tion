@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     command: >
-      --model mistralai/Mistral-7B-Instruct-v0.1
+      --model deepseek-ai/deepseek-coder-1.3b-instruct
       --max-model-len 2048
       --port 8000
     environment:

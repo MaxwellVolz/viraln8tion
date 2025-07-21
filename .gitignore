@@ -2,6 +2,8 @@
 *zzz.md
 *.env
 *.venv
+outputs/*
+models/*
 
 # Logs
 logs
