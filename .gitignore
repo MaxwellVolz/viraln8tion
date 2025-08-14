@@ -2,8 +2,7 @@
 *zzz.md
 *.env
 *.venv
-outputs/*
-models/*
+sd-data/*
 
 # Logs
 logs

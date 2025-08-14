@@ -1,19 +1,25 @@
 
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n
+    image: n8nio/n8n:latest
     container_name: n8n
-    build:
-      context: ./n8n
-      dockerfile: Dockerfile
+    networks:
+      - internal
     ports:
       - "5678:5678"
     environment:
-      - WEBHOOK_URL=http://host.docker.internal:5678
       - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - GENERIC_TIMEZONE=America/Los_Angeles
+      - N8N_PROTOCOL=http
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - WEBHOOK_URL=http://localhost:5678
+      # optional but recommended for creds at rest:
+      # - N8N_ENCRYPTION_KEY=<32+ char random string>
     volumes:
-      - C:/Docker/n8n-data:/home/node/.n8n
+      - /mnt/c/Docker/n8n-data:/home/node/.n8n
     restart: unless-stopped
+
 
   minio:
     image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
@@ -21,12 +27,16 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    networks:
+      - internal
     environment:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=password123
     command: server /data --console-address ":9001"
     volumes:
-      - C:/Docker/minio-data:/data
+      - /home/narfa/docker-data/minio:/data
+
+
 
   kokoro-tts:
     image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2
@@ -50,7 +60,7 @@ services:
     environment:
       - BASEROW_PUBLIC_URL=http://host.docker.internal:85
     volumes:
-      - C:/Docker/baserow-data:/baserow/data
+    - /home/narfa/docker-data/baserow:/baserow/data
     restart: unless-stopped
     shm_size: "256mb"
 
@@ -69,8 +79,9 @@ services:
           devices:
             - capabilities: [gpu]
     volumes:
-      - ./models:/app/stable-diffusion-webui/models
-      - ./outputs:/app/stable-diffusion-webui/outputs
+      - ./sd-data/models:/app/stable-diffusion-webui/models
+      - ./sd-data/outputs:/app/stable-diffusion-webui/outputs
+      - ./sd-data/extensions:/app/stable-diffusion-webui/extensions
     restart: unless-stopped
 
 
@@ -86,3 +97,7 @@ services:
       - S3_SECRET_KEY=${S3_SECRET_KEY}
       - S3_BUCKET_NAME=nca-toolkit
       - S3_REGION=None
+
+networks:
+  internal:
+    driver: bridge

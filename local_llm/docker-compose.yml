@@ -1,16 +1,15 @@
-
 services:
-  deepseek:
+  oss20b:
     image: vllm/vllm-openai:latest
-    container_name: deepseek
+    container_name: gptoss20b
     ports:
       - "8000:8000"
     command: >
-      --model mistralai/Mistral-7B-Instruct-v0.1
-      --max-model-len 2048
+      --model openai/gpt-oss-20b
+      --max-model-len 128k
       --port 8000
     environment:
-      - HF_TOKEN=${HF_TOKEN}  # Optional if model is public
+      - HF_TOKEN=${HF_TOKEN}
     deploy:
       resources:
         reservations:

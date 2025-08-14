@@ -1,0 +1,32 @@
+{
+    "debugMode": false,
+    "ignoreStartUrls": false,
+    "includeNSFW": true,
+    "maxComments": 10,
+    "maxCommunitiesCount": 2,
+    "maxItems": {{ $json.posts }},
+    "maxPostCount": {{ $json.posts }},
+    "maxUserCount": 2,
+    "proxy": {
+      "useApifyProxy": true,
+      "apifyProxyGroups": [
+        "RESIDENTIAL"
+      ]
+    },
+    "scrollTimeout": 40,
+    "searchComments": false,
+    "searchCommunities": false,
+    "searchPosts": true,
+    "searchUsers": false,
+    "skipComments": true,
+    "skipCommunity": true,
+    "skipUserPosts": false,
+    "sort": "new",
+    "startUrls": [
+      {
+        "url": "https://www.reddit.com/r/{{ $json.subreddit }}/top/?t={{ $json.time }}",
+        "method": "GET"
+      }
+    ]
+  }
+  

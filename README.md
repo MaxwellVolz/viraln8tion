@@ -42,6 +42,7 @@ Automated viral video pipeline using n8n and DeepSeek 3.1 with free TTS, caption
 2. [Github](https://github.com/apps/desktop)
 3. **Optional** [NodeJS](https://nodejs.org/en/download) 
 
+
 ## Setup
 
 1. Clone the repo:
@@ -53,12 +54,13 @@ cd viraln8tion
 
 ### Run Services in Docker Containers
 
-| Service    | Purpose         | Access                                                |
-| ---------- | --------------- | ----------------------------------------------------- |
-| n8n        | Automation Tool | [Console](http://localhost:5678/setup)                |
-| MiniIO     | Object Storage  | admin :: password123 [console](http://localhost:9001) |
-| Kokoro TTS | Text-to-Speech  | [Console](http://localhost:8880/web)                  |
-| Baserow    | Database UI     | [Console](http://host.docker.internal:85)             |
+| Service          | Purpose         | Access                                             |
+| ---------------- | --------------- | -------------------------------------------------- |
+| n8n              | Automation Tool | [Console](http://localhost:5678/setup)             |
+| MiniIO           | Object Storage  | admin :: password123 [console](http://minnio:9001) |
+| Kokoro TTS       | Text-to-Speech  | [Console](http://localhost:8880/web)               |
+| Baserow          | Database UI     | [Console](http://host.docker.internal:85)          |
+| Stable Diffusion | Free Image Gen  | [Console](http://host.docker.internal:7860)        |
 
 MiniIO
 http://host.docker.internal:9001
@@ -356,6 +358,25 @@ docker compose up -d stable-diffusion
 curl http://localhost:7860/sdapi/v1/txt2img \
   -H "Content-Type: application/json" \
   -d '{
+    "prompt": "A cyberpunk-styled close-up of a grieving parent'\''s hands cradling a jar filled with dirt instead of ashes, illuminated by a flickering neon sign outside a dimly lit funeral home. The jar reflects eerie blue and purple hues, casting long shadows on the teardrop-streaked face in the background.",
+    "negative_prompt": "blurry, ugly, deformed, bad anatomy, low quality, abstract, cropped, out of frame, messy, bad lighting, text, watermark, distorted, wrong perspective",
+    "steps": 20,
+    "width": 576,
+    "height": 1024
+  }' | jq -r '.images[0]' | base64 -d > result.png
+```
+
+### Upgrade to `SD-XL` model
+
+[Download](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/sd_xl_base_1.0.safetensors)
+
+Place in /models
+
+
+```sh
+curl http://localhost:7860/sdapi/v1/txt2img \
+  -H "Content-Type: application/json" \
+  -d '{
     "sd_model_checkpoint": "sdxl_base_1.0.safetensors",
     "prompt": "A cyberpunk-styled close-up of a grieving parent'\''s hands cradling a jar filled with dirt instead of ashes, illuminated by a flickering neon sign outside a dimly lit funeral home. The jar reflects eerie blue and purple hues, casting long shadows on the teardrop-streaked face in the background.",
     "negative_prompt": "blurry, ugly, deformed, bad anatomy, low quality, abstract, cropped, out of frame, messy, bad lighting, text, watermark, distorted, wrong perspective",
@@ -363,7 +384,14 @@ curl http://localhost:7860/sdapi/v1/txt2img \
     "width": 576,
     "height": 1024
   }' | jq -r '.images[0]' | base64 -d > result.png
-
 ```
 
 
+### Add LoRA Models
+
+[Download from here](https://civitai.com/models/312530?modelVersionId=1962475)
+
+
+## Test Subjects - HN
+
+[Dynamic Programming](https://news.ycombinator.com/item?id=44603349)
