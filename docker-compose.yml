@@ -43,6 +43,10 @@ services:
     container_name: kokoro-tts
     ports:
       - "8880:8880"
+    gpus: all
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     # Uncomment if GPU is available
     # deploy:
     #   resources:
@@ -65,24 +69,24 @@ services:
     shm_size: "256mb"
 
 
-  stable-diffusion:
-    build:
-      context: ./stable_diffusion
-      dockerfile: Dockerfile
-    container_name: sd
-    command: ["bash", "webui.sh", "--xformers", "--api", "--listen"]
-    ports:
-      - "7860:7860"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
-    volumes:
-      - ./sd-data/models:/app/stable-diffusion-webui/models
-      - ./sd-data/outputs:/app/stable-diffusion-webui/outputs
-      - ./sd-data/extensions:/app/stable-diffusion-webui/extensions
-    restart: unless-stopped
+  # stable-diffusion:
+  #   build:
+  #     context: ./stable_diffusion
+  #     dockerfile: Dockerfile
+  #   container_name: sd
+  #   command: ["bash", "webui.sh", "--xformers", "--api", "--listen"]
+  #   ports:
+  #     - "7860:7860"
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - capabilities: [gpu]
+  #   volumes:
+  #     - ./sd-data/models:/app/stable-diffusion-webui/models
+  #     - ./sd-data/outputs:/app/stable-diffusion-webui/outputs
+  #     - ./sd-data/extensions:/app/stable-diffusion-webui/extensions
+  #   restart: unless-stopped
 
 
   nca-toolkit:
