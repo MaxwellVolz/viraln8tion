@@ -17,7 +17,7 @@ services:
       # optional but recommended for creds at rest:
       # - N8N_ENCRYPTION_KEY=<32+ char random string>
     volumes:
-      - /mnt/c/Docker/n8n-data:/home/node/.n8n
+      - ./docker-data/n8n:/home/node/.n8n
     restart: unless-stopped
 
 
@@ -34,7 +34,7 @@ services:
       - MINIO_ROOT_PASSWORD=password123
     command: server /data --console-address ":9001"
     volumes:
-      - /home/narfa/docker-data/minio:/data
+      - ./docker-data/minio:/data
 
 
 
@@ -64,7 +64,7 @@ services:
     environment:
       - BASEROW_PUBLIC_URL=http://host.docker.internal:85
     volumes:
-    - /home/narfa/docker-data/baserow:/baserow/data
+      - ./docker-data/baserow:/baserow/data
     restart: unless-stopped
     shm_size: "256mb"
 

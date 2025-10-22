@@ -1,397 +1,273 @@
-# autom8n
+# viraln8tion
 
-Automated viral video pipeline using n8n and DeepSeek 3.1 with free TTS, captions, music, and publishing.
+Automated viral video pipeline using n8n and AI models with free TTS, captions, music, and publishing.
 
 ## Overview
 
-`autom8n` automates the creation and publishing of shortform video content. Using n8n as the orchestrator and `DeepSeek 3.1` to write scripts, the pipeline generates voiceovers, visuals, captions, and music — and can even auto-upload.
+**viraln8tion** automates the creation and publishing of short-form video content. Using n8n as the orchestrator and AI models (DeepSeek, local LLMs) to write scripts, the pipeline generates voiceovers, visuals, captions, and music — and can even auto-upload to social platforms.
 
 ## Features
 
-- Script generation using DeepSeek 3.1
-- Text-to-speech with local TTS engines (e.g., Piper, Bark, Coqui)
-- Automatic captioning using Whisper or WhisperX
+- Script generation using DeepSeek 3.1 or local LLMs
+- Text-to-speech with Kokoro TTS (GPU or CPU)
+- Automatic captioning using Whisper/WhisperX
 - Background music via free audio sources or generated loops
 - Video rendering with FFmpeg or Auto-Editor
-- Optional uploading/posting to TikTok, YouTube Shorts, etc.
+- Optional uploading to TikTok, YouTube Shorts, etc.
 - 100% free and unlimited with self-hosted components
+- Local image generation with Stable Diffusion
 
 ## Architecture
 
 1. **Trigger**: Scheduled or event-driven n8n workflow
-2. **Script Generation**: DeepSeek call to generate a short, viral script
-3. **TTS**: Convert script to audio using a local TTS engine
+2. **Script Generation**: AI call to generate a short, viral script
+3. **TTS**: Convert script to audio using Kokoro TTS
 4. **Music**: Add royalty-free or auto-generated background music
-5. **Captioning**: Generate subtitle timing and overlay with Whisper
+5. **Captioning**: Generate subtitle timing and overlay
 6. **Rendering**: Merge visuals, audio, and captions using FFmpeg
-7. **Publishing**: Upload via APIs or headless browser automation
+7. **Publishing**: Upload via APIs or automation
 
-## Requirements
+## Prerequisites
 
-- Node.js
-- Docker (optional, for Whisper or n8n)
-- Python (for Whisper/WhisperX)
-- n8n (self-hosted or desktop)
-- DeepSeek 3.1 (local model or API)
-- FFmpeg
-- A local TTS engine (Piper recommended)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- [Git](https://github.com/apps/desktop) or Git CLI
+- GPU recommended for Stable Diffusion and Kokoro TTS (CPU versions available)
+- Optional: [Node.js](https://nodejs.org/en/download) for local development
 
-## Prereq's
+## Quick Start
 
-1. Docker Desktop
-2. [Github](https://github.com/apps/desktop)
-3. **Optional** [NodeJS](https://nodejs.org/en/download) 
-
-
-## Setup
-
-1. Clone the repo:
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/maxwellvolz/viraln8tion.git
 cd viraln8tion
 ```
 
-### Run Services in Docker Containers
+### 2. Configure Environment
 
-| Service          | Purpose         | Access                                             |
-| ---------------- | --------------- | -------------------------------------------------- |
-| n8n              | Automation Tool | [Console](http://localhost:5678/setup)             |
-| MiniIO           | Object Storage  | admin :: password123 [console](http://minnio:9001) |
-| Kokoro TTS       | Text-to-Speech  | [Console](http://localhost:8880/web)               |
-| Baserow          | Database UI     | [Console](http://host.docker.internal:85)          |
-| Stable Diffusion | Free Image Gen  | [Console](http://host.docker.internal:7860)        |
+Copy the example environment file and fill in your API keys:
 
-MiniIO
-http://host.docker.internal:9001
-Kokoro TTS
-
-NCA Toolkit
-http://host.docker.internal:8080
-
-
-Run all 4 of these in separate Terminals (cuz they take a while):
-
-```sh
-# n8n
-docker run -d --name n8n -p 5678:5678 -e WEBHOOK_URL=http://host.docker.internal:5678 -e N8N_DEFAULT_BINARY_DATA_MODE=filesystem -v C:\Docker\n8n-data:/home/node/.n8n docker.n8n.io/n8nio/n8n
-
-# miniIO
-docker run -p 9000:9000 -p 9001:9001 --name miniio -v C:\Docker\minio-data:/data -e MINIO_ROOT_USER=admin -e MINIO_ROOT_PASSWORD=password123 quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z server /data --console-address ":9001"
-
-# Kokoro TTS
-docker run -d --gpus all -p 8880:8880 --name kokoro-tts ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2
-
-# Only if ur hardware sucks - Kokoro TTS CPU Edition
-docker run -p 8880:8880 --name kokoro-tts-cpu ghcr.io/remsky/kokoro-fastapi-cpu:v0.2.2
-
-# Baserow
-docker run -d --name baserow -e BASEROW_PUBLIC_URL=http://host.docker.internal:85 -v C:\Docker\baserow-data:/baserow/data -p 85:80 -p 443:443 --restart unless-stopped --shm-size=256mb baserow/baserow:1.32.5
+```bash
+cp .env.example .env
+# Edit .env with your API keys
 ```
 
-> Activate n8n key - from email
+### 3. Start Services with Docker Compose
 
+```bash
+docker compose up -d
+```
 
-### Verify Setups
+This will start all services defined in `docker-compose.yml`:
+- n8n (automation)
+- MinIO (object storage)
+- Kokoro TTS (text-to-speech)
+- Baserow (database)
+- NCA Toolkit (video editing API)
 
-Check `Docker Desktop` or the `Consoles` listed above.
+Wait 2-3 minutes for services to fully initialize.
 
-1. [n8n](http://localhost:5678)
-   1. Make Account
-2. [MiniIO](http://localhost:9001/browser)
-   1. Make Account
-   2. Make Database `nca-toolkit`
-   3. Generate Access and Secret Keys using the default root credentials
-   4. Save these for later
-3. [Kokoro](http://localhost:8880/web)
-4. [Baserow](http://host.docker.internal:85/)
-   1. Create Workspace
-   2. Create Database `TikTok`
-      1. Add Tables `Videos` and `Scenes`
+## Service Access
 
-#### Database Table Setup - EZ Mode
+| Service          | Purpose            | URL                                    | Default Credentials   |
+| ---------------- | ------------------ | -------------------------------------- | --------------------- |
+| n8n              | Automation Tool    | http://localhost:5678                  | Create on first visit |
+| MinIO            | Object Storage     | http://localhost:9001                  | admin / password123   |
+| Kokoro TTS       | Text-to-Speech     | http://localhost:8880/web              | N/A                   |
+| Baserow          | Database UI        | http://localhost:85                    | Create on first visit |
+| NCA Toolkit      | Video Editing API  | http://localhost:8080                  | N/A                   |
+| Stable Diffusion | Image Generation   | http://localhost:7860 (if configured)  | N/A                   |
 
-1. Save a .csv
-2. Import as View for `Videos` and `Scenes`
+## Initial Setup
 
-Videos
+### MinIO Configuration
+
+1. Open http://localhost:9001
+2. Login with `admin` / `password123`
+3. Create a bucket named `nca-toolkit`
+4. Generate Access and Secret Keys:
+   - Navigate to **Access Keys** → **Create access key**
+   - Save both keys for later use
+5. Update your `.env` file with these keys
+
+### Baserow Database Setup
+
+1. Open http://localhost:85
+2. Create a new workspace
+3. Create a database named `TikTok`
+4. Import the following tables:
+
+**Videos Table** (`Videos.csv`):
 ```csv
 id,Title,Description,Script,Final Video URL,Video + Captions URL,Video + Audio URL,Raw Video URL,TTS Audio,TTS Voice,Scenes,Captions URL,Generative Style,Initial Prompt,Status,Image Provider
 1,,,,,,,,,,,,,,,
 ```
 
-Scenes
+**Scenes Table** (`Scenes.csv`):
 ```csv
 id,Record ID,Prompt,Duration,Image,Video Clip URL,Videos,Image Provider
 1,1,,0.00,,,,
 ```
 
-### Install NCA Toolkit
+### n8n Configuration
 
-| Service     | Purpose           | Access  |
-| ----------- | ----------------- | ------- |
-| NCA Toolkit | Video Editing API | Console |
+1. Open http://localhost:5678
+2. Create an account
+3. Import the workflow JSON (link in n8n folder or documentation)
+4. Configure credentials:
+   - OpenRouter API (for AI models)
+   - Baserow API token
+   - MinIO credentials
 
-Usage:
-- images to videos
-- combine clips
-- transcribe clips
+#### n8n HTTP Request Node Setup
 
-Replace `your_access_key` and `your_secret_key` with the values from MiniIO:
+For Baserow integration:
+- Method: POST
+- Auth: None
+- Headers:
+  - Name: `Authorization`
+  - Value: `Token YOUR_BASEROW_API_TOKEN`
+- Body: JSON with required fields
 
-```sh
-docker run -d -p 8080:8080 --name nca-toolkit -e API_KEY=thekey -e S3_ENDPOINT_URL=http://host.docker.internal:9000 -e S3_ACCESS_KEY=your_access_key -e S3_SECRET_KEY=your_secret_key -e S3_BUCKET_NAME=nca-toolkit -e S3_REGION=None stephengpope/no-code-architects-toolkit:latest
+## API Configuration
+
+### OpenRouter
+
+1. Create account at [OpenRouter](https://openrouter.ai/)
+2. Copy your API key
+3. Add to n8n credentials
+
+### YouTube Upload (Optional)
+
+To enable automated YouTube uploads:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable **YouTube Data API v3**
+4. Create OAuth 2.0 credentials:
+   - Application Type: **Web application**
+   - Authorized redirect URI: `http://localhost:5678/rest/oauth2-credential/callback`
+5. Copy Client ID and Client Secret to n8n credentials
+
+## Local LLM Setup (Optional)
+
+If you want to avoid API rate limits, run models locally:
+
+### Prerequisites
+
+- Python 3.8+
+- Create `local_llm/.env` with: `HF_TOKEN=your_huggingface_token`
+
+### Installation
+
+```bash
+cd local_llm
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
----
+### Running Models
 
-## OpenRouter 
+Use the included Makefile:
 
-1. [Make Account](https://openrouter.ai/)
-2. Copy Api Key
-3. Add to [n8n](http://localhost:5678/home/credentials)
+```bash
+make tinyllama          # TinyLlama on port 8000
+make deepseekcode       # DeepSeek Coder on port 8000
+make mistral            # Mistral 7B on port 8000
+make stop-all           # Stop all containers
+```
 
+### Testing Local LLM
 
----
+```bash
+curl -X POST http://localhost:8000/v1/chat/completions \
+  -H "Authorization: Bearer test" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "deepseek-ai/deepseek-coder-1.3b-instruct",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Write a short viral video script about AI"
+      }
+    ]
+  }'
+```
 
-## n8n Automation
-
-1. Import [JSON](https://drive.google.com/file/d/1EGCWHhfXQ_k4krF29rFgktrdzOwvqPY7)
-2. Duplicate
-3. Disconnect all but first lane
-4. Double-click `On form submission` and open the `Test URL`
-
-
-http://host.docker.internal:85/api-docs/database/163
-
-then Settings
-
-amazing facts about linus torvalds
-
-
-## n8n Setup
-
-### Node -> HTTP Request
-
-- Method: Post
-- Auth: None
-- Send Headers: True
-  - Name: Authorization
-  - Value: Token enter_your_baserow_api_token
-- Send Body: True
-  - Name: Title, Value: {value}
-
-
-## Rate Limited? Local LLM Setup
-
-### Prereq's
-
-- Python
-- 
-
-Make `/local_llm/.env` with: `HF_TOKEN=your_huggingface_key`
+## Stable Diffusion (Optional)
 
 ### Setup
 
-```sh
-cd local_llm
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
-### Run it
+Uncomment the `stable-diffusion` service in `docker-compose.yml`:
 
-```sh
-cd local_llm
-make tinyllama          # Spin up tinyllama on port 8000
-make tinyllama-down     # Stop tinyllama container
-make deepseekcode       # Spin up DeepSeekCode on port 8000
-make deepseekcode-down  # Stop DeepSeekCode container
-make mistral            # Spin up Mistral 7B on port 8000
-make mistral-down       # Stop Mistral container
-make stop-all           # Kill all running containers
-```
-
-## Postman - Test LLM Endpoint
-
-- Type: POST
-- URL: http://localhost:8000/v1/chat/completions
-
-Headers
-
-- Authorization | Bearer Test
-- Content-Type  | application/json
-
-Body
-
-Model Names: `deepseek-ai/deepseek-coder-1.3b-instruct`, `mistralai/Mistral-7B-Instruct-v0.1`, `TinyLlama/TinyLlama-1.1B-Chat-v1.0`
-
-raw:
-
-```json
-{  
-   "model": "deepseek-ai/deepseek-coder-1.3b-instruct",  
-   "messages": 
-   [    
-      {      
-      "role": "user",      
-      "content": "solve the fibonacci sequence with python using a list comp"    
-      }  
-   ]
-}
-```
-
-
-## Youtube Credentials
-
-To **automate posting to YouTube using n8n**, you need to use the **YouTube node** (which uses the YouTube Data API v3). Here's a full setup that lets you upload videos programmatically.
-
----
-
-## ✅ Requirements
-
-1. **Google Cloud project**
-2. **YouTube Data API v3 enabled**
-3. **OAuth2 credentials**
-4. **n8n YouTube node configured**
-
----
-
-## 🔧 Setup Guide
-
-### 1. **Create OAuth Credentials**
-
-* Go to: [https://console.cloud.google.com/](https://console.cloud.google.com/)
-* Create a project or use existing one.
-* Enable **YouTube Data API v3**
-* Go to **APIs & Services → Credentials**
-
-
-Thanks — that screenshot confirms you're using an **OAuth Client for “Desktop App”**, not for “Web App”.
-
-### 🔥 Problem:
-
-**Desktop App clients do not support redirect URI configuration** — that’s why you don’t see that option.
-
-### 🔧 Fix:
-
-You need to create a **new OAuth 2.0 Client ID of type “Web Application”**, which allows setting redirect URIs.
-
----
-
-## ✅ Correct Steps:
-
-1. In **Google Cloud → Credentials**
-2. Click **Create Credentials → OAuth Client ID**
-3. Choose:
-
-   ```
-   Application Type: Web application
-   ```
-4. Set name: `n8n YouTube Uploader`
-5. Add **Authorized Redirect URI**:
-
-   ```
-   http://localhost:5678/rest/oauth2-credential/callback
-   ```
-6. Save. You’ll get a new **Client ID** and **Client Secret**.
-
----
-
-## 🔁 Then in n8n:
-
-1. Go to **Credentials → New → YouTube OAuth2**
-2. Use the new Web Client ID + Secret
-3. It will now **redirect correctly** and allow you to sign in
-
----
-
-
-
-## Stable Diffusion Locally
-
-
-### Pre-reqs
-
-```sh
-mkdir models outputs
-```
-
-
-### 
-
-docker-compose.yml
-
-```yml
-services:
-   ...
-  stable-diffusion:
-    image: siutin/stable-diffusion-webui-docker:latest-cuda-12.1.1
-    container_name: sd
-    command: ["bash", "webui.sh", "--api", "--listen"]
-    ports:
-      - "7860:7860"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
-    volumes:
-      - ./models:/app/stable-diffusion-webui/models
-      - ./outputs:/app/stable-diffusion-webui/outputs
-    restart: unless-stopped
-```
-
-
-### Run Service
-
-```sh
+```bash
 docker compose up -d stable-diffusion
-# wait 2 minutes
+# Wait 2-3 minutes for initialization
 ```
 
-### Test Image
+### Download Models
 
-> Note: Stable Diffusion WebUI API (AUTOMATIC1111-based) returns a base64-encoded PNG, not a raw image file.
-> We can convert to a `.png` to view the result.
+1. Download [SD-XL Base 1.0](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/sd_xl_base_1.0.safetensors)
+2. Place in `./models` directory
 
-```sh
+### Test Image Generation
+
+```bash
 curl http://localhost:7860/sdapi/v1/txt2img \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "A cyberpunk-styled close-up of a grieving parent'\''s hands cradling a jar filled with dirt instead of ashes, illuminated by a flickering neon sign outside a dimly lit funeral home. The jar reflects eerie blue and purple hues, casting long shadows on the teardrop-streaked face in the background.",
-    "negative_prompt": "blurry, ugly, deformed, bad anatomy, low quality, abstract, cropped, out of frame, messy, bad lighting, text, watermark, distorted, wrong perspective",
+    "sd_model_checkpoint": "sd_xl_base_1.0.safetensors",
+    "prompt": "A cyberpunk city at night, neon lights, ultra detailed",
+    "negative_prompt": "blurry, ugly, low quality",
     "steps": 20,
     "width": 576,
     "height": 1024
   }' | jq -r '.images[0]' | base64 -d > result.png
 ```
 
-### Upgrade to `SD-XL` model
+## Project Structure
 
-[Download](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/sd_xl_base_1.0.safetensors)
-
-Place in /models
-
-
-```sh
-curl http://localhost:7860/sdapi/v1/txt2img \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sd_model_checkpoint": "sdxl_base_1.0.safetensors",
-    "prompt": "A cyberpunk-styled close-up of a grieving parent'\''s hands cradling a jar filled with dirt instead of ashes, illuminated by a flickering neon sign outside a dimly lit funeral home. The jar reflects eerie blue and purple hues, casting long shadows on the teardrop-streaked face in the background.",
-    "negative_prompt": "blurry, ugly, deformed, bad anatomy, low quality, abstract, cropped, out of frame, messy, bad lighting, text, watermark, distorted, wrong perspective",
-    "steps": 20,
-    "width": 576,
-    "height": 1024
-  }' | jq -r '.images[0]' | base64 -d > result.png
+```
+viraln8tion/
+├── docker-compose.yml      # Service orchestration
+├── .env.example            # Environment template
+├── docker-data/            # Persistent data (gitignored)
+├── local_llm/              # Local LLM setup
+├── models/                 # Model files (gitignored)
+├── outputs/                # Generated files (gitignored)
+├── n8n/                    # n8n workflows
+├── stable_diffusion/       # SD configuration
+└── README.md               # This file
 ```
 
+## Troubleshooting
 
-### Add LoRA Models
+### Services won't start
+- Ensure Docker Desktop is running
+- Check port conflicts: `docker ps`
+- Review logs: `docker compose logs [service_name]`
 
-[Download from here](https://civitai.com/models/312530?modelVersionId=1962475)
+### GPU not detected
+- Ensure NVIDIA drivers are installed
+- Install [nvidia-docker2](https://github.com/NVIDIA/nvidia-docker)
+- Uncomment GPU sections in `docker-compose.yml`
 
+### Out of memory
+- Increase Docker memory allocation in Docker Desktop settings
+- Use CPU versions of services instead of GPU
 
-## Test Subjects - HN
+## Contributing
 
-[Dynamic Programming](https://news.ycombinator.com/item?id=44603349)
+Contributions welcome! Please open an issue or PR.
+
+## License
+
+MIT
+
+## Acknowledgments
+
+- [n8n](https://n8n.io/) - Workflow automation
+- [Kokoro TTS](https://github.com/remsky/kokoro-fastapi) - Text-to-speech
+- [Stable Diffusion](https://github.com/AUTOMATIC1111/stable-diffusion-webui) - Image generation
+- [NCA Toolkit](https://github.com/stephengpope/no-code-architects-toolkit) - Video processing
